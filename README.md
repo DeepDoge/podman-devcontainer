@@ -1,6 +1,6 @@
 # podman-devcontainer  
 
-A simple Bash wrapper for `podman` to make it work with DevContainers. Just a quick way to get Podman playing nice with your dev setup.  
+A simple `podman` wrapper to make it work with DevContainers. Just a quick way to get Podman playing nice with your dev setup.  
 
 ## Usage  
 
