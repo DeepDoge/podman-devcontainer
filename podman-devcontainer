@@ -1,0 +1,79 @@
+#!/bin/bash
+
+if [[ "$1" == "run" ]]; then
+  first_arg="$1"
+  shift
+
+  user_home="/root"
+  image=""
+  metadata_json=""
+
+  # Convert args into an array
+  args=("$@")
+
+  # First, extract image if provided in arguments
+  for arg in "${args[@]}"; do
+    if [[ "$arg" == "--image"* ]]; then
+      image="${arg#--image }"
+    fi
+  done
+
+  # If image is still empty, extract it from run command arguments
+  if [[ -z "$image" ]]; then
+    for ((i = 0; i < ${#args[@]}; i++)); do
+      if [[ "${args[i]}" == "--entrypoint" ]]; then
+        if (( i + 2 < ${#args[@]} )); then
+          image="${args[i+2]}"
+        fi
+        break
+      fi
+    done
+  fi
+
+  echo "Extracted image: $image" >&2
+
+  remote_user=""
+  config_file=""
+
+  # Check devcontainer.config_file for remoteUser first
+  for arg in "${args[@]}"; do
+    if [[ "$arg" == devcontainer.config_file=* ]]; then
+      config_file="${arg#devcontainer.config_file=}"
+      echo "Checking config file: $config_file" >&2
+      if [[ -f "$config_file" ]]; then
+        remote_user=$(jq -r '.remoteUser // empty' "$config_file" 2>/dev/null | tr -d '\n\r')
+      fi
+      break
+    fi
+  done
+
+  # If remote_user is still empty, check metadata from arguments and image LABEL
+  if [[ -z "$remote_user" ]]; then
+    for arg in "${args[@]}"; do
+      if [[ "$arg" == devcontainer.metadata=* ]]; then
+        metadata_json="${arg#devcontainer.metadata=}"
+        break
+      fi
+    done
+    
+    if [[ -z "$metadata_json" && -n "$image" ]]; then
+      metadata_json=$(podman inspect --format '{{ index .Config.Labels "devcontainer.metadata" }}' "$image" 2>/dev/null)
+    fi
+    
+    remote_user=$(echo "$metadata_json" | jq -r '[.[] | select(.remoteUser) | .remoteUser] | last' 2>/dev/null | tr -d '\n\r')
+  fi
+
+  if [[ -n "$remote_user" ]]; then
+    user_home="/home/$remote_user"
+  fi
+
+  custom_args=(
+    --env "HOME=$user_home"
+    --privileged
+    --userns=keep-id
+  )
+
+  podman "$first_arg" "${custom_args[@]}" "$@"
+else
+  podman "$@"
+fi
