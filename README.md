@@ -25,11 +25,7 @@ distrobox-host-exec podman-devcontainer "$@"
 
 This ensures `podman-devcontainer` runs on the host instead of inside `distrobox`.  
 
-Personally, I use a separate home directory for `distrobox`, which makes keeping things organized even easier.
-
-### Alternative Setup  
-
-If you’re not using Docker (like me), you can just name it `docker` instead. That way, you don’t have to tweak DevContainer settings for every editor or IDE.  
+*Personally, I use a separate home directory for `distrobox`, which makes keeping things organized even easier.*
 
 ---
 
