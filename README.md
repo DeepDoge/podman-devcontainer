@@ -30,3 +30,7 @@ This ensures `podman-devcontainer` runs on the host instead of inside `distrobox
 ---
 
 Been using this setup for over a year—zero issues. Works like a charm! 🚀  
+
+## License
+
+[MIT](LICENSE)
